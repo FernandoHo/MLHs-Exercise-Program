@@ -7,49 +7,78 @@
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
     <style>
+      /* 让页面占满整个浏览器窗口 */
       html, body {
-        height: 100%;
         margin: 0;
         padding: 0;
-      }
-      /* 响应式容器，保持16:9的宽高比例 */
-      #unity-container {
-        position: relative;
         width: 100%;
-        max-width: 100%;
-        height: 0;
-        padding-bottom: 56.25%; /* 9/16 = 56.25% */
+        height: 100%;
         overflow: hidden;
         background: #000;
       }
-      /* Canvas 绝对定位填满容器 */
-      #unity-canvas {
+      /* 外层容器，充满整个视窗 */
+      #unity-wrapper {
+        width: 100%;
+        height: 100%;
+        position: relative;
+        overflow: hidden;
+      }
+      /* 内层 Unity 容器，固定尺寸为 3840×2160（16:9），
+         通过 transform 实现缩放及居中显示 */
+      #unity-container {
         position: absolute;
-        top: 0;
-        left: 0;
+        width: 3840px;
+        height: 2160px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%) scale(1);
+        transform-origin: top left;
+      }
+      /* Canvas 填满 Unity 容器 */
+      #unity-canvas {
         width: 100%;
         height: 100%;
       }
     </style>
   </head>
   <body>
-    <div id="unity-container" class="unity-desktop">
-      <!-- canvas 的内部渲染分辨率依然保留原始 3840x2160 -->
-      <canvas id="unity-canvas" width="3840" height="2160" tabindex="-1"></canvas>
-      <div id="unity-loading-bar">
-        <div id="unity-logo"></div>
-        <div id="unity-progress-bar-empty">
-          <div id="unity-progress-bar-full"></div>
+    <div id="unity-wrapper">
+      <div id="unity-container" class="unity-desktop">
+        <!-- canvas 内部渲染分辨率保持 3840x2160 -->
+        <canvas id="unity-canvas" width="3840" height="2160" tabindex="-1"></canvas>
+        <div id="unity-loading-bar">
+          <div id="unity-logo"></div>
+          <div id="unity-progress-bar-empty">
+            <div id="unity-progress-bar-full"></div>
+          </div>
         </div>
-      </div>
-      <div id="unity-warning"></div>
-      <div id="unity-footer">
-        <div id="unity-logo-title-footer"></div>
-        <div id="unity-fullscreen-button"></div>
-        <div id="unity-build-title">TAPit</div>
+        <div id="unity-warning"></div>
+        <div id="unity-footer">
+          <div id="unity-logo-title-footer"></div>
+          <div id="unity-fullscreen-button"></div>
+          <div id="unity-build-title">TAPit</div>
+        </div>
       </div>
     </div>
     <script>
+      // 动态缩放函数：计算缩放因子并应用 transform
+      function resizeUnity() {
+        const container = document.getElementById('unity-container');
+        // 目标分辨率
+        const targetWidth = 3840;
+        const targetHeight = 2160;
+        // 当前浏览器窗口尺寸
+        const windowWidth = window.innerWidth;
+        const windowHeight = window.innerHeight;
+        // 计算水平和垂直方向的缩放比例，取较小值确保完全显示
+        const scaleX = windowWidth / targetWidth;
+        const scaleY = windowHeight / targetHeight;
+        const scale = Math.min(scaleX, scaleY);
+        container.style.transform = 'translate(-50%, -50%) scale(' + scale + ')';
+      }
+      window.addEventListener('resize', resizeUnity);
+      resizeUnity();
+
       var canvas = document.querySelector("#unity-canvas");
 
       // 用于显示提示信息（错误或警告）
@@ -61,10 +90,10 @@
         var div = document.createElement('div');
         div.innerHTML = msg;
         warningBanner.appendChild(div);
-        if (type == 'error') {
+        if (type === 'error') {
           div.style = 'background: red; padding: 10px;';
         } else {
-          if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
+          if (type === 'warning') div.style = 'background: yellow; padding: 10px;';
           setTimeout(function() {
             warningBanner.removeChild(div);
             updateBannerVisibility();
@@ -96,11 +125,10 @@
         document.getElementsByTagName('head')[0].appendChild(meta);
         document.querySelector("#unity-container").className = "unity-mobile";
         canvas.className = "unity-mobile";
-        // 如有需要可降低移动端设备的像素比：
+        // 如有需要可降低移动设备的像素比：
         // config.devicePixelRatio = 1;
       }
-      
-      // 不再使用 JavaScript 固定设置桌面版 canvas 的宽高，让 CSS 控制响应式布局
+
       document.querySelector("#unity-loading-bar").style.display = "block";
 
       var script = document.createElement("script");
