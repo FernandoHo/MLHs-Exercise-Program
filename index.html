@@ -55,24 +55,40 @@
     <script>
         var canvas = document.querySelector("#unity-canvas");
 
-        function unityShowBanner(msg, type) {
-            var warningBanner = document.querySelector("#unity-warning");
-            function updateBannerVisibility() {
-                warningBanner.style.display = warningBanner.children.length ? 'block' : 'none';
+        function resizeCanvas() {
+            let isFullScreen = document.fullscreenElement !== null; // 检查是否全屏模式
+
+            if (isFullScreen) {
+                let screenWidth = window.screen.width;
+                let screenHeight = window.screen.height;
+                let aspectRatio = 3840 / 2160; // 4K 宽高比
+                let newHeight = screenWidth / aspectRatio;
+
+                if (newHeight > screenHeight) {
+                    newHeight = screenHeight;
+                    screenWidth = newHeight * aspectRatio;
+                }
+
+                canvas.style.width = screenWidth + "px";
+                canvas.style.height = newHeight + "px";
+                canvas.width = screenWidth;
+                canvas.height = newHeight;
+            } else {
+                let scaleFactor = Math.min(window.innerWidth / 3840, window.innerHeight / 2160, 1);
+                canvas.style.width = Math.min(3840 * scaleFactor, window.innerWidth) + "px";
+                canvas.style.height = Math.min(2160 * scaleFactor, window.innerHeight) + "px";
+                canvas.width = 3840;
+                canvas.height = 2160;
             }
-            var div = document.createElement('div');
-            div.innerHTML = msg;
-            warningBanner.appendChild(div);
-            if (type == 'error') div.style = 'background: red; padding: 10px;';
-            else {
-                if (type == 'warning') div.style = 'background: yellow; padding: 10px;';
-                setTimeout(function () {
-                    warningBanner.removeChild(div);
-                    updateBannerVisibility();
-                }, 5000);
-            }
-            updateBannerVisibility();
         }
+
+        document.addEventListener("fullscreenchange", resizeCanvas);
+        document.addEventListener("webkitfullscreenchange", resizeCanvas);
+        document.addEventListener("mozfullscreenchange", resizeCanvas);
+        document.addEventListener("MSFullscreenChange", resizeCanvas);
+
+        window.addEventListener("resize", resizeCanvas);
+        resizeCanvas();
 
         var buildUrl = "Build";
         var loaderUrl = buildUrl + "/TAPit-WEB.loader.js";
@@ -85,39 +101,7 @@
             companyName: "DefaultCompany",
             productName: "TAPit",
             productVersion: "1.0",
-            showBanner: unityShowBanner,
-            devicePixelRatio: window.devicePixelRatio || 1.5,  // 自动调整像素密度，防止模糊
         };
-
-        function resizeCanvas() {
-            let isFullScreen = document.fullscreenElement !== null;  // 检查是否全屏模式
-
-            if (isFullScreen) {
-                // 全屏模式：让 canvas 充满全屏
-                canvas.style.width = "100vw";
-                canvas.style.height = "100vh";
-                canvas.width = window.screen.width;
-                canvas.height = window.screen.height;
-            } else {
-                // 非全屏模式：按 4K 比例缩放
-                let scaleFactor = Math.min(window.innerWidth / 3840, window.innerHeight / 2160, 1);
-                canvas.style.width = Math.min(3840 * scaleFactor, window.innerWidth) + "px";
-                canvas.style.height = Math.min(2160 * scaleFactor, window.innerHeight) + "px";
-                canvas.width = 3840;
-                canvas.height = 2160;
-            }
-        }
-
-        document.querySelector("#unity-fullscreen-button").onclick = () => {
-            unityInstance.SetFullscreen(1); // 仅在点击"全屏"按钮时才触发
-        };
-
-        document.addEventListener("fullscreenchange", resizeCanvas);
-        document.addEventListener("webkitfullscreenchange", resizeCanvas);
-        document.addEventListener("mozfullscreenchange", resizeCanvas);
-
-        window.addEventListener("resize", resizeCanvas);
-        resizeCanvas();
 
         document.querySelector("#unity-loading-bar").style.display = "block";
 
@@ -136,7 +120,6 @@
             });
         };
         document.body.appendChild(script);
-
     </script>
 </body>
 </html>
