@@ -6,6 +6,34 @@
     <title>Unity Web Player | TAPit</title>
     <link rel="shortcut icon" href="TemplateData/favicon.ico">
     <link rel="stylesheet" href="TemplateData/style.css">
+    
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* 防止页面滚动条 */
+            background-color: black;
+        }
+
+        #unity-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%); /* 居中 canvas */
+            width: 100vw; 
+            height: 100vh; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #unity-canvas {
+            display: block;
+            max-width: 100vw;
+            max-height: 100vh;
+            object-fit: contain; /* 确保画面不会变形 */
+        }
+    </style>
 </head>
 <body>
     <div id="unity-container" class="unity-desktop">
@@ -65,16 +93,15 @@
             let scaleFactor = Math.min(window.innerWidth / 3840, window.innerHeight / 2160, 1);
             
             // 让 Canvas 自适应屏幕，但保持 4K 内部渲染
-            canvas.style.width = (3840 * scaleFactor) + "px";
-            canvas.style.height = (2160 * scaleFactor) + "px";
+            canvas.style.width = Math.min(3840 * scaleFactor, window.innerWidth) + "px";
+            canvas.style.height = Math.min(2160 * scaleFactor, window.innerHeight) + "px";
 
-            // 让 WebGL 内部仍然渲染 4K，避免模糊
+            // 保持 WebGL 内部仍然渲染 4K，避免模糊
             canvas.width = 3840;
             canvas.height = 2160;
         }
 
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            // 移动端适配
             var meta = document.createElement('meta');
             meta.name = 'viewport';
             meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
@@ -83,17 +110,13 @@
             document.querySelector("#unity-container").className = "unity-mobile";
             canvas.className = "unity-mobile";
 
-            // 移动端使用基于高度的缩放
             let scaleFactor = window.innerHeight / 2160;
             canvas.style.width = (3840 * scaleFactor) + "px";
             canvas.style.height = (2160 * scaleFactor) + "px";
-
-            // 保持 WebGL 内部渲染 4K
             canvas.width = 3840;
             canvas.height = 2160;
 
         } else {
-            // PC 端适配，监听窗口大小变化
             window.addEventListener("resize", resizeCanvas);
             resizeCanvas();
         }
