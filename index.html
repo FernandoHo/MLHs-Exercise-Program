@@ -54,6 +54,7 @@
 
     <script>
         var canvas = document.querySelector("#unity-canvas");
+        var unityInstance;
 
         function resizeCanvas() {
             let isFullScreen = document.fullscreenElement !== null;
@@ -61,7 +62,7 @@
             if (isFullScreen) {
                 let screenWidth = window.screen.width;
                 let screenHeight = window.screen.height;
-                let aspectRatio = 3840 / 2160;
+                let aspectRatio = 3840 / 2160; // 4K 宽高比
                 let newHeight = screenWidth / aspectRatio;
 
                 if (newHeight > screenHeight) {
@@ -77,23 +78,23 @@
                 let scaleFactor = Math.min(window.innerWidth / 3840, window.innerHeight / 2160, 1);
                 canvas.style.width = Math.min(3840 * scaleFactor, window.innerWidth) + "px";
                 canvas.style.height = Math.min(2160 * scaleFactor, window.innerHeight) + "px";
-                canvas.width = 3840;
-                canvas.height = 2160;
+                canvas.width = Math.floor(canvas.style.width.replace("px", ""));
+                canvas.height = Math.floor(canvas.style.height.replace("px", ""));
             }
 
-            // 确保 Unity 在场景切换后适配
+            // 确保 Unity WebGL 重新计算渲染大小
             if (unityInstance !== undefined) {
                 unityInstance.SendMessage("CanvasScalerObject", "UpdateCanvasSize");
             }
         }
 
+        // 监听全屏模式 & 窗口变化，防止黑屏
         document.addEventListener("fullscreenchange", resizeCanvas);
         document.addEventListener("webkitfullscreenchange", resizeCanvas);
         document.addEventListener("mozfullscreenchange", resizeCanvas);
         document.addEventListener("MSFullscreenChange", resizeCanvas);
         window.addEventListener("resize", resizeCanvas);
-        resizeCanvas();
-
+        
         var buildUrl = "Build";
         var loaderUrl = buildUrl + "/TAPit-WEB.loader.js";
         var config = {
@@ -105,6 +106,7 @@
             companyName: "DefaultCompany",
             productName: "TAPit",
             productVersion: "1.0",
+            devicePixelRatio: window.devicePixelRatio || 1.5,  // 自动调整像素密度，防止模糊
         };
 
         document.querySelector("#unity-loading-bar").style.display = "block";
@@ -114,13 +116,17 @@
         script.onload = () => {
             createUnityInstance(canvas, config, (progress) => {
                 document.querySelector("#unity-progress-bar-full").style.width = 100 * progress + "%";
-            }).then((unityInstance) => {
+            }).then((instance) => {
+                unityInstance = instance;
                 document.querySelector("#unity-loading-bar").style.display = "none";
                 document.querySelector("#unity-fullscreen-button").onclick = () => {
                     unityInstance.SetFullscreen(1);
                 };
+
+                // 解决黑屏：确保 Unity WebGL 初始化后 Canvas 立即调整大小
+                setTimeout(() => resizeCanvas(), 100);
             }).catch((message) => {
-                alert(message);
+                alert("Unity WebGL 加载失败: " + message);
             });
         };
         document.body.appendChild(script);
