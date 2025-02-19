@@ -62,16 +62,15 @@
         };
 
         function resizeCanvas() {
-            let scale = 0.8; // 让游戏画面占据 80% 屏幕大小
-            let newWidth = window.innerWidth * scale;
-            let newHeight = window.innerHeight * scale;
+            let scaleFactor = Math.min(window.innerWidth / 3840, window.innerHeight / 2160, 1); 
+            // 让游戏在 4K 画面基础上按比例缩小，确保不会超出屏幕
 
-            canvas.style.width = newWidth + "px";
-            canvas.style.height = newHeight + "px";
+            canvas.style.width = (3840 * scaleFactor) + "px";
+            canvas.style.height = (2160 * scaleFactor) + "px";
         }
 
         if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
-            // 移动端自适应
+            // 移动端适配
             var meta = document.createElement('meta');
             meta.name = 'viewport';
             meta.content = 'width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes';
@@ -80,10 +79,13 @@
             document.querySelector("#unity-container").className = "unity-mobile";
             canvas.className = "unity-mobile";
 
-            // 调整移动端 Canvas 分辨率
-            resizeCanvas();
+            // 移动端使用基于高度的缩放
+            let scaleFactor = window.innerHeight / 2160;
+            canvas.style.width = (3840 * scaleFactor) + "px";
+            canvas.style.height = (2160 * scaleFactor) + "px";
+
         } else {
-            // 桌面端自适应
+            // PC 端适配，监听窗口大小变化
             window.addEventListener("resize", resizeCanvas);
             resizeCanvas();
         }
